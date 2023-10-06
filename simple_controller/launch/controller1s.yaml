@@ -1,0 +1,8 @@
+proportional: 0.3
+differential: 1.0
+integral: 0.04
+max_antiwindup_error: 0.3
+radius: 25.0
+cy: 70.0
+traj_length: 50
+timer_period: 0.5

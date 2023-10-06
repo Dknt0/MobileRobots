@@ -1,0 +1,12 @@
+<launch>
+    <!-- 上传机器人到参数服务器 -->
+    <param name="robot_description" textfile="$(find polaris_ranger_ev)/model/car_model.urdf" />
+    <!-- 关节状态发布 -->
+    <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher" />
+
+    <!-- 启动 gazebo，空世界 -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" />
+
+    <!-- 在 gazebo 中生成机器人模型 -->
+    <node pkg="gazebo_ros" type="spawn_model" name="model" args="-urdf -model robot -param robot_description -x 0.0 -y 0.0 -z 0.0" />
+</launch>

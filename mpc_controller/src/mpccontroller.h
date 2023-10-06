@@ -97,9 +97,9 @@ protected:
 
   void on_timer(const ros::TimerEvent& event);
   void on_pose(const nav_msgs::OdometryConstPtr& odom);
-  /*
-   *@brief calculates feedback error for trajectory
-   *@return feedback error
+  /**
+   * @brief calculates feedback error for trajectory
+   * @return feedback error
    */
   double cross_track_error();
 
@@ -140,6 +140,7 @@ public:
   void reset();
   MPCController(const std::string& ns = "mpc_controller");
   virtual ~MPCController();
+  void solveMPC();
 };
 
 } /* namespace simple_controller */

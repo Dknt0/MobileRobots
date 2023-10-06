@@ -1,3 +1,4 @@
+// 此源文件不参与编译
 #include <acado/acado_optimal_control.hpp>
 #include "mpccontroller.h"
 
@@ -6,7 +7,7 @@ USING_NAMESPACE_ACADO
 namespace mpc_controller
 {
 
-
+// 这个函数没有用到
 void MPCController::solveMPC() {
 
   DifferentialState x, y, fi, delta, vel;

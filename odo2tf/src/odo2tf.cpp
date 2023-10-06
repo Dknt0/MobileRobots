@@ -13,6 +13,7 @@
 
 std::unique_ptr<tf::TransformBroadcaster> tf_caster_ptr;
 
+// 将里程计消息转化为 tf 消息
 void on_odo(const nav_msgs::OdometryConstPtr msg)
 {
   tf::Quaternion q;
@@ -33,6 +34,3 @@ int main(int argc, char* argv[])
   ros::spin();
   return 0;
 }
-
-
-

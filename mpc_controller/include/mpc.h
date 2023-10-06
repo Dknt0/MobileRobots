@@ -14,8 +14,11 @@ namespace mpc_controller
 
 class MPC
 {
+  // 位置x, y, 姿态phi, 车轮转角, 速度
   ACADO::DifferentialState x, y, fi, delta, vel;
+  // 控制量  车轮转角角速度  加速度
   ACADO::Control delta_rate, acc;
+  // 系统方程类
   ACADO::DifferentialEquation f;
   double t_start = 0;
   double t_end;
@@ -25,7 +28,7 @@ class MPC
   double max_acc;
   double max_delta;
   double max_delta_rate;
-  double L;
+  double L; // 轴距
   double kcte;
   double kepsi;
   double kev;

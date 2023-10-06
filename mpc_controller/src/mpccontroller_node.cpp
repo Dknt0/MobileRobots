@@ -36,7 +36,10 @@ int main(int argc, char* argv[])
 
   //try to receive first message from robot before starting controller
   //this stuff was introduced for gazebo
+  // 等待里程计消息
   wait_gazebo(nh);
+
+  // 创建控制类后循环
   mpc_controller::MPCController Cntrl;
 
   ros::spin();

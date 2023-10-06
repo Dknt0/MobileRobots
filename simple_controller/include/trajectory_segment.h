@@ -31,7 +31,7 @@ public:
   virtual tf::Vector3 get_point(double point_len) const = 0;
   /// \ returns flat orientation
   virtual double get_orientation(double point_len) const = 0;
-  /// \ returns length of nearest trajectory point for the given point
+  /// \ returns length of nearest trajectory point for the given point  获取离给定点最近的轨迹点相对轨迹起点的距离
   virtual double get_point_length(double x, double y) const = 0;
   /// \ returns distance to nearest trajectory point w r t direction (normal error)
   virtual double get_point_distance(double x, double y) const = 0;

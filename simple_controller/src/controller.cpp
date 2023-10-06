@@ -156,7 +156,9 @@ void Controller::purePursuite() {
   double e_y = (dx_target * x_xAxis + dy_target * y_xAxis);
   // std::cout << "e_y: " << e_y << std::endl;
   double targetCurvate = - 2 * e_y / pow(real_lookAheadDistance, 2.0);
-  
+  std::cout << "targetCurvate: " << targetCurvate << std::endl;
+
+
   /* Send curvature as command to drives */
   std_msgs::Float32 cmd;
   cmd.data = clip<double>(targetCurvate, max_curvature);

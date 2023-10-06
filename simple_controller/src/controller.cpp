@@ -109,7 +109,7 @@ void Controller::pid_control(double error) {
 */
 void Controller::purePursuite() {
   /* Look ahead distance. It' a important parameter for pure pursuite control. */
-  const double lookAheadDistance = 5.0;
+  const double lookAheadDistance = 4.0;
 
   /* Search the best goal point in path pointcloud */
   double min_difference = 1e10;
@@ -166,7 +166,7 @@ void Controller::purePursuite() {
 }
 
 /**
- * @brief 定时器回调函数
+ * @brief 定时器回调函数 Timer callback function
  * 
  * 实现主要控制功能
 */
@@ -188,8 +188,10 @@ void Controller::on_timer(const ros::TimerEvent& event)
   // error is negative difference by y axe in the axis of the nereset pose
   double error = -(-dx * sin(nearest_pose_angle) + dy * cos(nearest_pose_angle));
 
-
+  // PID control
   // pid_control(error);
+
+  // pure pursuite control
   purePursuite();
 
   //send trajectory for velocity controller

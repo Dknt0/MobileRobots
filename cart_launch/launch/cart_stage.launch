@@ -9,6 +9,7 @@
 	  <remap from="/base_pose_ground_truth" to="/robot/base_pose_ground_truth"/>
    </node>
 
+   <!-- velocity controller -->
    <node pkg="stage_controller" type="stage_controller" name="robot" output="log" if="$(arg control_velocity)">
 		<param name="length" value="1.5"/>
 		<param name="max_steering" value="0.5"/>
@@ -17,6 +18,7 @@
 		<param name="max_acc" value="2.0"/>
    </node>
 
+   <!-- throttle controller -->
    <node pkg="stage_controller" type="stage_throttle" name="robot" output="log" unless="$(arg control_velocity)">
       <param name="length" value="1.5"/>
       <param name="max_steering" value="0.5"/>

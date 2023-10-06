@@ -106,6 +106,8 @@ void Controller::pid_control(double error) {
 
 /**
  * @brief pure pursuite control function
+ * 
+ * Dknt 2023.10.6
 */
 void Controller::purePursuite() {
   /* Look ahead distance. It' a important parameter for pure pursuite control. */

@@ -32,7 +32,7 @@ last_found_landmark_index - индекс последнего найденног
 ### Запуск
 Запуск осуществляется (после сборки и инициализации рабочей папки) с помощью команды:
 ```bash
-roslauch barrel_slam slam.launch
+roslaunch barrel_slam slam.launch
 ```
 Запустится симулятор, контроллер для движения МР по заданному треку, модуль EKF SLAM - barrel_slam и rviz для визуализации маяков и робота.
 

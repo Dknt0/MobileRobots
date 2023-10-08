@@ -1,0 +1,9 @@
+<launch>
+
+    <node name="planner" pkg="simple_planner" type="simple_planner" output="screen">
+        <remap from="/planner/target_pose" to="/move_base_simple/goal"/>
+        <remap from="/planner/ground_truth" to="/robot/base_pose_ground_truth"/>
+    </node>
+
+</launch>
+ 

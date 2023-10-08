@@ -13,7 +13,10 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
   tf
+  cv_bridge
 )
+
+find_package(OpenCV REQUIRED)
 
 catkin_package(
 )
@@ -26,4 +29,5 @@ add_executable(simple_planner src/simple_planner.cpp src/planner.cpp src/planner
 
 target_link_libraries(simple_planner
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBS}
 )

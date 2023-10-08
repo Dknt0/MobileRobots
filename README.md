@@ -116,6 +116,7 @@ roslaunch simple_controller controller_stage.launch
 	Остановить проект можно с помощью ctrl-C в консоли
 
 ## Практические задания курса
+
 1. [Контроллер управления движением по траектории](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/simple_controller)
 
 > 实现了轨迹跟踪，横向控制
@@ -126,9 +127,15 @@ roslaunch simple_controller controller_stage.launch
 
 3. [MPC контроллер](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/mpc_controller)
 
+> MPC 控制，用多多项式拟合当前路径，输入 MPC 求解器计算最优控制，控制量为加速度和转向角速度
+
 4. [Планирование траектории](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/simple_planner)
 
+> 轨迹规划
+
 5. [Построение карты](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/simple_map)
+
+> 建图
 
 6. [Локализация по дальномеру](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/feature_matcher)
 

@@ -289,7 +289,7 @@ void Controller::reset(double p, double d, double i)
 }
 
 /**
- * @brief 创建点云轨迹
+ * @brief 从路径片段构造路径点消息
 */
 nav_msgs::Path Controller::create_path() const {
   //prepare path message from trajectory

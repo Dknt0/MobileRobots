@@ -24,12 +24,31 @@ void on_command_velocity(const std_msgs::Float32& msg) {
   err_pub.publish(err);
 }
 
+const double kernel[] = {0.32729673187833136,
+                   0.28883835210868825,
+                   0.1985155027079532,
+                   0.10625769156262453,
+                   0.044294795911171664};
+
 /**
  * @brief odometry callback function
+ * 
+ * Gaussian filter
 */
 void on_odo(const nav_msgs::Odometry& odom)
 {
-  current_velocity = odom.twist.twist.linear.x;
+  static double v = 0, vd = 0, vdd = 0, vddd = 0, vdddd = 0;
+  v = odom.twist.twist.linear.x;
+  current_velocity = v * kernel[0] +
+                     vd * kernel[1] +
+                     vdd * kernel[2] +
+                     vddd * kernel[3] +
+                     vdddd * kernel[4];
+  vdddd = vddd;
+  vddd = vdd;
+  vdd = vd;
+  vd = v;
+  // current_velocity = v;
   // ROS_INFO_STREAM("current velocity " << current_velocity << " err = " << cmd_velocity - current_velocity);
 }
 

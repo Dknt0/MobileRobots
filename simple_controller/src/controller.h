@@ -82,12 +82,15 @@ protected:
   ros::Publisher err_pub;
   ros::Publisher steer_pub;
   ros::Publisher path_pub;
+  ros::Publisher vel_pub;
   /// \ frame_id for coordinates of controller
   std::string world_frame_id;
 
   void on_timer(const ros::TimerEvent& event);
   void on_pose(const nav_msgs::OdometryConstPtr& odom);
   void on_path(const nav_msgs::Path& path);
+
+  void generate_path(const nav_msgs::Path& path);
   /*
    *@brief calculates feedback error for trajectory
    *@return feedback error

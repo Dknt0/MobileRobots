@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Path2
+        - /Odometry1/Shape1
       Splitter Ratio: 0.5
     Tree Height: 194
   - Class: rviz/Selection
@@ -170,6 +170,41 @@ Visualization Manager:
       Topic: /planner/path
       Unreliable: false
       Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 1
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 0.20000000298023224
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic: /robot/base_pose_ground_truth
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -197,7 +232,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 5.4836273193359375e-06
+      Angle: 0.015005483292043209
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -207,10 +242,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 24.421977996826172
+      Scale: 71.57542419433594
       Target Frame: <Fixed Frame>
-      X: 1.1182482242584229
-      Y: 0.5504879355430603
+      X: -1.7647616863250732
+      Y: -5.128629207611084
     Saved: ~
 Window Geometry:
   Displays:

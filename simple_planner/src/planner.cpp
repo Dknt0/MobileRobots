@@ -5,6 +5,7 @@
 #include <set>
 #include <utility>
 
+
 namespace simple_planner
 {
 
@@ -76,10 +77,9 @@ void Planner::on_target(const geometry_msgs::PoseStamped& pose)
     sensor_msgs::ImagePtr imgMsg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", searchmap_img).toImageMsg();
     searchmap_img_pubilsher.publish(imgMsg);
 
-
     if (!path_msg_.points.empty()) {
-        // path_msg_.header.stamp = ros::Time::now();
-        // path_msg_.header.frame_id = pose.header.frame_id;
+        // 轨迹平滑
+        trajectorySmoothing();
         nav_msgs::Path navPath_msg;
         navPath_msg.header.frame_id = pose.header.frame_id;
         navPath_msg.header.stamp = ros::Time::now();
@@ -89,11 +89,38 @@ void Planner::on_target(const geometry_msgs::PoseStamped& pose)
             poseTemp.pose.position.x = path_msg_.points[index].x;
             poseTemp.pose.position.y = path_msg_.points[index].y;
             // TODO: 姿态
+            geometry_msgs::Quaternion quat;
+            quat.w = 1.0;
+            poseTemp.pose.orientation = quat;
             navPath_msg.poses.push_back(poseTemp);
         }
         path_publisher_.publish(navPath_msg);
     } else {
         ROS_WARN_STREAM("Path not found!");
+    }
+}
+
+const double convKernel[] = {0.10204081632653061, 
+                             0.24489795918367346, 
+                             0.30612244897959184,
+                             0.24489795918367346,
+                             0.10204081632653061};
+
+/**
+ * @brief 轨迹平滑函数    Trajectory smoothing
+ * 
+ * Dknt 2023.10.8
+*/
+void Planner::trajectorySmoothing() {
+    auto tempPoints = path_msg_.points;
+
+    for (size_t index = 2; index < path_msg_.points.size() - 2; ++index) {
+        path_msg_.points[index].x = 0.0;
+        path_msg_.points[index].y = 0.0;
+        for (size_t j = 0; j < 5; ++j) {
+            path_msg_.points[index].x += tempPoints[index - 2 + j].x * convKernel[j];
+            path_msg_.points[index].y += tempPoints[index - 2 + j].y * convKernel[j];
+        }
     }
 }
 
@@ -390,8 +417,6 @@ void Planner::calculate_path_astar() {
         path_msg_.points.push_back(point);
         tempPath.pop_back();
     }
-
-    
 }
 
 /**
@@ -516,7 +541,6 @@ void Planner::calculate_path_lee() {
     path_msg_.points.clear();
     std::vector<geometry_msgs::Point32, std::allocator<geometry_msgs::Point32>> tempPath;
     auto pathPoint = targetPoint;
-
     while (true) {
         geometry_msgs::Point32 tempPoint = point_position(pathPoint.i, pathPoint.j);
         tempPath.push_back(tempPoint);
@@ -526,13 +550,11 @@ void Planner::calculate_path_lee() {
         pathPoint.i = node.pre_i;
         pathPoint.j = node.pre_j;
     }
-
     // 反向
     while (!tempPath.empty()) {
         auto &point = tempPath.back();
         path_msg_.points.push_back(point);
         tempPath.pop_back();
     }
-
 }
 } /* namespace simple_planner */

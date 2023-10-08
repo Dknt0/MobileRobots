@@ -14,6 +14,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <cv_bridge/cv_bridge.h>
+// #include <ceres/ceres.h>
 
 namespace simple_planner
 {
@@ -58,6 +59,9 @@ private:
   // функция вычисления пути в заданную точку
   void calculate_path_astar();
   void calculate_path_lee();
+  void trajectorySmoothing();
+
+
   double heuristic(int i, int j);
 
   // функции для работы с картами и индексами
@@ -121,7 +125,7 @@ private:
   MapIndex targetPoint;
   geometry_msgs::Pose target_pose_;
 
-  sensor_msgs::PointCloud path_msg_;
+  sensor_msgs::PointCloud path_msg_; // 这个不是用来发送的消息，轨迹暂存在这里
   
 
   double robot_radius_ = nh_.param("robot_radius", 0.5);

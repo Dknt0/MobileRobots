@@ -44,6 +44,20 @@ void Controller::on_path(const nav_msgs::Path& path) {
   ROS_INFO_STREAM("Got path " << path.poses.size());
   this->path = path;
   nearest_point_index = 0;
+
+  // 发布速度
+  std_msgs::Float32 vel_cmd;
+  vel_cmd.data = 3;
+  vel_pub.publish(vel_cmd);
+}
+
+/**
+ * @brief 轨迹回调函数
+ * 
+*/
+void Controller::generate_path(const nav_msgs::Path& path) {
+  this->path = path;
+  nearest_point_index = 0;
 }
 
 /**
@@ -111,7 +125,7 @@ void Controller::pid_control(double error) {
 */
 void Controller::purePursuite() {
   /* Look ahead distance. It' a important parameter for pure pursuite control. */
-  const double lookAheadDistance = 4.0;
+  const double lookAheadDistance = 1.0;
 
   /* Search the best goal point in path pointcloud */
   double min_difference = 1e10;
@@ -143,9 +157,23 @@ void Controller::purePursuite() {
         real_lookAheadDistance = distance;
     }
   }
-
   // std::cout << "Look ahead difference: " << real_lookAheadDistance << std::endl;
 
+  /* For simple_path, if path isn't a cycle, stop the car at the end */
+  if (nearest_point_index > path.poses.size() - 30) {
+    auto it_end = path.poses.cend();
+    auto it_begin = path.poses.cbegin();
+    if ((pow(it_end->pose.position.x - it_begin->pose.position.x, 2)
+         + pow(it_end->pose.position.y - it_begin->pose.position.y, 2)) > 4) {
+      std_msgs::Float32 vel_cmd;
+      vel_cmd.data = 0.0;
+      vel_pub.publish(vel_cmd);
+
+      lookAhead_index = path.poses.size() - 1;
+      return;
+    }
+  }
+  // std::cout << "Total index: " << path.poses.size() << " Nearest index: " << nearest_point_index << std::endl;
 
   /* Count target curvate */
   const geometry_msgs::Pose& lookAhead_pose = path.poses[lookAhead_index].pose; // 目标位姿
@@ -158,8 +186,7 @@ void Controller::purePursuite() {
   double e_y = (dx_target * x_xAxis + dy_target * y_xAxis);
   // std::cout << "e_y: " << e_y << std::endl;
   double targetCurvate = - 2 * e_y / pow(real_lookAheadDistance, 2.0);
-  std::cout << "targetCurvate: " << targetCurvate << std::endl;
-
+  // std::cout << "targetCurvate: " << targetCurvate << std::endl;
 
   /* Send curvature as command to drives */
   std_msgs::Float32 cmd;
@@ -192,7 +219,6 @@ void Controller::on_timer(const ros::TimerEvent& event)
 
   // PID control
   // pid_control(error);
-
   // pure pursuite control
   purePursuite();
 
@@ -353,9 +379,10 @@ Controller::Controller(const std::string& ns):
     odo_sub(nh.subscribe("odom", 1, &Controller::on_odo, this)), // 里程计
     path_sub(nh.subscribe("path", 1, &Controller::on_path, this)), // 路径
     timer( nh.createTimer( ros::Duration(nh.param("timer_period", 0.1)), &Controller::on_timer, this ) ), // 在这里发送控制信息
-    err_pub(nh.advertise<std_msgs::Float32>("error", 10) ),
+    err_pub(nh.advertise<std_msgs::Float32>("error", 10)),
     steer_pub(nh.advertise<std_msgs::Float32>("/steering", 10)),
-    path_pub(nh.advertise<nav_msgs::Path>("controller_path", 1))
+    path_pub(nh.advertise<nav_msgs::Path>("controller_path", 1)),
+    vel_pub(nh.advertise<std_msgs::Float32>("velocity", 10))
 {
   //counter clock
   trajectory.emplace_back( std::make_shared<trajectory::CircularSegment>( 1.0 / radius,    0,       0,    1.0,   0,   M_PI/2*radius) );
@@ -376,7 +403,7 @@ Controller::Controller(const std::string& ns):
 
   current_segment = trajectory.begin();
   const auto trajectory_path = create_path();
-  on_path(trajectory_path);
+  generate_path(trajectory_path);
 }
 
 

@@ -307,7 +307,7 @@ void add_point(sensor_msgs::PointCloud& msg, const tf::Vector3& point)
 }
 
 /**
- * @brief 发布轨迹点云
+ * @brief 发布轨迹点云  这个是真实轨迹
 */
 void MPCController::publish_trajectory()
 {
@@ -423,9 +423,9 @@ MPCController::MPCController(const std::string& ns):
     steer_pub( nh.advertise<std_msgs::Float32>("/steering", 1) ),
     vel_pub( nh.advertise<std_msgs::Float32>("/velocity", 1) ),
     odo_sub( nh.subscribe("odom", 1, &MPCController::on_odo, this)),
-    traj_pub( nh.advertise<sensor_msgs::PointCloud>("trajectory", 1) ),
-    poly_pub( nh.advertise<sensor_msgs::PointCloud>("poly", 1) ),
-    mpc_traj_pub( nh.advertise<sensor_msgs::PointCloud>("mpc_traj", 1) ),
+    traj_pub( nh.advertise<sensor_msgs::PointCloud>("trajectory", 1) ), // 一段真实轨迹
+    poly_pub( nh.advertise<sensor_msgs::PointCloud>("poly", 1) ), // 多项式拟合轨迹结果
+    mpc_traj_pub( nh.advertise<sensor_msgs::PointCloud>("mpc_traj", 1) ), // 发布 MPC 预估轨迹点
     mpc_steps( nh.param("mpc_steps", 4) ),
     mpc_dt( nh.param("mpc_dt", 0.5) ),
     mpc(mpc_steps, mpc_dt, max_velocity, max_acc, max_steer_angle, max_steer_rate, wheel_base,

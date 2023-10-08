@@ -19,8 +19,8 @@
     	<remap from="velocity" to="/robot/velocity"/>
     </node>
 
-	<node name="rqt" pkg="mpc_controller" type="start_rqt" args="--perspective-file $(find mpc_controller)/rqt/steer_error.perspective" output="screen">
-    </node>
+	<node name="rqt" pkg="mpc_controller" type="start_rqt" args="--perspective-file $(find mpc_controller)/rqt/steer_error.perspective" output="screen"/>
+    
 
     <!-- start gzclient via script -->
     <!--

@@ -139,7 +139,9 @@ roslaunch simple_controller controller_stage.launch
 
 6. [Локализация по дальномеру](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/feature_matcher)
 
+> 基于特征的定位
+
 7. [EKF SLAM](https://github.com/AndreyMinin/MobileRobots/tree/master/mr_ws/src/barrel_slam)
 
-
+> 扩展卡尔曼滤波器 SLAM
 

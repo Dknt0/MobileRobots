@@ -96,7 +96,6 @@ std::size_t Controller::get_nearest_path_pose_index(int start_index,
 }
 
 void Controller::pid_control(double error) {
-  
   double diff_err = error - last_error;
   last_error = error;
   if ( fabs(error) < max_antiwindup_error )
@@ -115,7 +114,6 @@ void Controller::pid_control(double error) {
   std_msgs::Float32 cmd;
   cmd.data = clip<double>(curvature, max_curvature);
   steer_pub.publish(cmd);
-
 }
 
 /**
@@ -125,7 +123,7 @@ void Controller::pid_control(double error) {
 */
 void Controller::purePursuite() {
   /* Look ahead distance. It' a important parameter for pure pursuite control. */
-  const double lookAheadDistance = 1.0;
+  const double lookAheadDistance = 4.0;
 
   /* Search the best goal point in path pointcloud */
   double min_difference = 1e10;
@@ -218,7 +216,7 @@ void Controller::on_timer(const ros::TimerEvent& event)
   double error = -(-dx * sin(nearest_pose_angle) + dy * cos(nearest_pose_angle));
 
   // PID control
-  // pid_control(error);
+  pid_control(error);
   // pure pursuite control
   purePursuite();
 

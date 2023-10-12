@@ -8,7 +8,7 @@ define sicksensor sensor
   samples 180
   #samples 90 # still useful but much faster to compute
   color_rgba [ 0 0 1 0.15 ]
-  # noise [0.1 0 0]
+  noise [0.1 0 0]
 )
 
 define sickcommon ranger

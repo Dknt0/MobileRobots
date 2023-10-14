@@ -36,32 +36,34 @@ private:
 
 private:
   ros::NodeHandle nh;
-  ros::Subscriber laser_sub = nh.subscribe("/base_scan", 1, &Matcher::on_laser_scan, this);
-  ros::Publisher feature_pub = nh.advertise<visualization_msgs::Marker>("features", 1, true);
-  ros::Publisher odo_pub = nh.advertise<nav_msgs::Odometry>("odo", 1 , false);
-  double feature_rad = nh.param<double>("feature_radius", 0.55);
-  const std::string map_frame = nh.param<std::string>("map_frame", "map");
+  ros::Subscriber laser_sub = nh.subscribe("/base_scan", 1, &Matcher::on_laser_scan, this); // 激光雷达信息收听者
+  ros::Publisher feature_pub = nh.advertise<visualization_msgs::Marker>("features", 1, true); // 特征点发布者
+  ros::Publisher odo_pub = nh.advertise<nav_msgs::Odometry>("odo", 1 , false); // 里程计发布者
+  double feature_rad = nh.param<double>("feature_radius", 0.55); // 特征点半径
+  const std::string map_frame = nh.param<std::string>("map_frame", "map"); // 地图坐标系名称
   // features from base scan набор опорных особенных точек в СК карты
-  std::vector<Eigen::Vector2d> base_features;
+  std::vector<Eigen::Vector2d> base_features; // 基准帧特征
   // features from new scan набор особенных точек из нового скана в СК лазерного дальномера
-  std::vector<Eigen::Vector2d> new_features;
+  std::vector<Eigen::Vector2d> new_features; // 当前帧特征
   // features from new scan transfromed to base scan according to interpolation
   // набор особенных точек нового скана переведенных в СК карты
   // с учетом предсказания - считаем что робот продолжит движение как на предыдущем шаге
-  std::vector<Eigen::Vector2d> predicted_features;
+  std::vector<Eigen::Vector2d> predicted_features; // 预测特征位置
   // indexes of corresponding new features for every base feature
   // вектор индексов особенных точек нового скана для каждой опорной особенной точки
   // либо -1 - если нет таковой
-  std::vector<int> feature_pair_indices;
+  std::vector<int> feature_pair_indices; // 匹配特征下标
   // transform from current scan to map
   // преобразование переводящее текущий скан в карту, обновляется в результате каждого шага
-  Eigen::Isometry2d transform = Eigen::Isometry2d::Identity();
+  Eigen::Isometry2d transform = Eigen::Isometry2d::Identity(); // 当前帧相对于地图系变换
   // transform from current scan to previous
   // инкрементальное преобразование за последний шаг в СК карты
-  Eigen::Isometry2d incremental_transform = Eigen::Isometry2d::Identity();
+  Eigen::Isometry2d incremental_transform = Eigen::Isometry2d::Identity(); // 当前帧相对于上一帧位置
 
-  tf::TransformBroadcaster br;
+  tf::TransformBroadcaster br; // tf 数据库
   // отметка времени предыдущего скана
-  ros::Time last_stamp = ros::Time::now();
+  ros::Time last_stamp = ros::Time::now(); // 上一帧时间
+
+  double distancePassed = 0.0;
 };
 

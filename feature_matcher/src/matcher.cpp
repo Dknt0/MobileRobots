@@ -1,24 +1,34 @@
 #include "matcher.h"
 #include <tf/transform_datatypes.h>
 
+/**
+ * @brief 激光雷达扫描回调函数
+ * 
+*/
 void Matcher::on_laser_scan(const sensor_msgs::LaserScan& scan)
 {
   ROS_INFO_STREAM("on laser scan");
-  detect_features(scan);  
-  publish_features(scan.header);
-  predict_features_poses();
-  find_feature_pairs();
-  find_transform();
-  update_base_features();
-  publish_transform(scan.header);  
+  detect_features(scan); // 检测特征点
+  publish_features(scan.header); // 发送当前特征点
+
+  predict_features_poses(); // 预测当前帧特征
+  find_feature_pairs(); // 寻找匹配点对
+  find_transform(); // 计算坐标变换
+
+  update_base_features(); // 更新基准帧特征
+  publish_transform(scan.header); // 发布坐标变换
 }
 
+/**
+ * @brief 发送特征点
+ * 
+*/
 void Matcher::publish_features(const std_msgs::Header& header)
 {
   visualization_msgs::Marker marker;
-  marker.header = header;
-  marker.color.a = 1.0;
-  marker.color.g = 1.0;
+  marker.header = header; // header.frame 为 scan
+  marker.color.a = 1.0; // 不透明
+  marker.color.g = 1.0; // 绿色
   marker.type = visualization_msgs::Marker::POINTS;
   marker.points.resize(new_features.size());
   for (std::size_t i = 0; i < marker.points.size(); ++i) {
@@ -33,6 +43,9 @@ void Matcher::publish_features(const std_msgs::Header& header)
   feature_pub.publish(marker);
 }
 
+/**
+ * @brief 添加特征
+*/
 void Matcher::add_feature(const sensor_msgs::LaserScan& scan, std::size_t start, std::size_t finish) {
   // добавляем только особенные  точки на которые попало более 2 лучей
   if (finish - start < 2) {
@@ -41,18 +54,66 @@ void Matcher::add_feature(const sensor_msgs::LaserScan& scan, std::size_t start,
   ROS_INFO_STREAM("Add feature between " << start << " " << finish);
   // TODO Здесь должен быть код определения координаты центра круглого препятствия 
   
+  double x = 0.0, y = 0.0;
+  // 根据扫描中点确定特征点中心
+  auto nearestPoint = [&]() {
+    double minDist = 1e100;
+    size_t minIdx;
+    for (size_t idx = start; idx < finish; ++idx) {
+      if (scan.ranges[idx] < minDist) {
+        minDist = scan.ranges[idx];
+        minIdx = idx;
+      }
+    }
+    double pointDist = minDist + feature_rad;
+    double pointAngle = minIdx * scan.angle_increment - M_PI_2;
+    // Feature position relative to laser
+    x = pointDist * cos(pointAngle);
+    y = pointDist * sin(pointAngle);
+  };
+
+  nearestPoint();
+
   // добавляем в вектор особенных точек
-  // new_features.push_back(Eigen::Vector2d(x, y)));
+  // 添加相对于激光雷达的坐标
+  new_features.push_back(Eigen::Vector2d(x, y));
 }
 
-void Matcher::detect_features(const sensor_msgs::LaserScan& scan)
-{
+/**
+ * @brief 检测特征点
+ * 提取当前帧特征，存放在 new_features 中
+ * 
+ * Dknt 2023.10.14
+ * 
+ * @param scan 激光雷达扫描消息
+*/
+void Matcher::detect_features(const sensor_msgs::LaserScan& scan) {
   new_features.clear();
   // TODO Здесь должен быть код для пределения особенные точек скана
   // В цикле по лучам ищем начальный и конечный индексы лучей, падающих на одно препятствие
   // и вызываем add_feature
+  size_t index = 0;
+  while (true) {
+    if (scan.ranges[index] > scan.range_max - 1.0) {
+      ++index;
+    }
+    else if (abs(scan.ranges[index] - scan.ranges[index + 1]) < feature_rad) {
+      size_t end_index = index + 1;
+      while (abs(scan.ranges[end_index] - scan.ranges[end_index + 1]) < feature_rad && end_index < scan.ranges.size() - 1)
+        ++end_index;
+      add_feature(scan, index, end_index);
+      index = end_index + 1;
+    }
+    else ++index;
+    if (index >= scan.ranges.size()) break;
+  }
 }
 
+/**
+ * @brief 预测当前帧特征位置，用于进行特征匹配
+ * 
+ * Dknt 2023.10.14
+*/
 void Matcher::predict_features_poses() {
   // считаем, что робот продолжит двигаться так же как на предыдущем шаге,
   // тогда положение скана будет определяться следующим трансформом
@@ -60,8 +121,15 @@ void Matcher::predict_features_poses() {
   // переводим точки скана в предсказанное положение
   predicted_features.resize(new_features.size());
   // TODO здесь должен быть код пересчета new_features в predicted_features с помощью interpolated_transform
+  // 将新特征坐标变换到基准系下
+  for (size_t idx = 0; idx < new_features.size(); ++idx) {
+    predicted_features[idx] = interpolated_transform * new_features[idx];
+  }
 }
 
+/**
+ * @brief 寻找匹配点对
+*/
 void Matcher::find_feature_pairs() {
   feature_pair_indices.clear();
   // для каждой точки базовой ищем ближайшую новую из предсказанных
@@ -85,23 +153,29 @@ void Matcher::find_feature_pairs() {
   	  //  пары нет	
   	  feature_pair_indices.push_back(-1);
   	}
-
   }
 }
 
-void Matcher::find_transform()
-{
-	Eigen::Matrix2d W = Eigen::Matrix2d::Zero();
+/**
+ * @brief 计算坐标变换
+ * 
+ * Method SVD ICP (Iterative Closest Point)
+ * https://zhuanlan.zhihu.com/p/108858766
+ * 
+*/
+void Matcher::find_transform() {
+	Eigen::Matrix2d W = Eigen::Matrix2d::Zero(); //
 	Eigen::Vector2d base_center = Eigen::Vector2d::Zero();
 	Eigen::Vector2d new_center = Eigen::Vector2d::Zero();
 	std::size_t pairs = 0;
 	// определяем количество пар и вычисляем геом. центр
+  // 遍历匹配点对，计算匹配点中心
 	for (std::size_t i = 0; i < feature_pair_indices.size(); ++i) {
 	  if (feature_pair_indices[i] >= 0){
 	  	++pairs;
 	  	base_center += base_features[i];
 	  	new_center += predicted_features[feature_pair_indices[i]];
-	  }       
+	  }
 	}
 	ROS_INFO_STREAM("pairs = " << pairs);
 	if (pairs < 2) {
@@ -111,23 +185,26 @@ void Matcher::find_transform()
 	base_center /= pairs;
 	new_center /= pairs;
 	// вычисляем матрицу W
+  // Covariance matrix Cov(base, pred)
 	for (std::size_t i = 0; i < feature_pair_indices.size(); ++i) {
 	  if (feature_pair_indices[i] >= 0){
 	  	W += (predicted_features[feature_pair_indices[i]] - new_center) * (base_features[i] - base_center).transpose();
-	  }       
+	  }
 	}
 	// вычисление угла из svd разложения сводится к
-	float angle = atan2 ((W (0, 1) - W (1, 0)), (W(0, 0) + W (1, 1)));
+	float angle = atan2((W (0, 1) - W (1, 0)), (W(0, 0) + W (1, 1)));
 	Eigen::Matrix2d R;
 	R (0, 0) = R (1, 1) = cos (angle);
-  	R (0, 1) = -sin (angle);
-  	R (1, 0) = sin (angle);
+  R (0, 1) = -sin (angle);
+  R (1, 0) = sin (angle);
 	Eigen::Vector2d t = base_center - R * new_center;
 	Eigen::Isometry2d result = Eigen::Translation2d(t) * Eigen::Isometry2d(R);
 
+  // result 为预测运动与实际运动之间的偏差
 	// обновляем трансформы
 	incremental_transform = result * incremental_transform;
 	transform = incremental_transform * transform;
+  distancePassed += incremental_transform.translation().norm();
 	// вычисляем среднюю ошибку
 	double err = 0;
 	for (std::size_t i = 0; i < feature_pair_indices.size(); ++i) {
@@ -140,9 +217,13 @@ void Matcher::find_transform()
 	ROS_INFO_STREAM("Transform to initial pose " << std::endl << transform.matrix());
 }
 
+/**
+ * @brief 发布坐标变换
+*/
 void Matcher::publish_transform(const std_msgs::Header& header)
 {
 	// публикуем одометрию
+  // 准备里程计
   nav_msgs::Odometry odo;
   odo.header.stamp = header.stamp;
   odo.header.frame_id = map_frame;
@@ -168,6 +249,7 @@ void Matcher::publish_transform(const std_msgs::Header& header)
   
   // публикуем трансформ от скана до карты, 
   // не наоборот, так как дерево tf - однонаправленное и в нем уже есть основание - система odom
+  // 发布坐标变换
   tf::Transform tf_transform;
   Eigen::Isometry2d inverted_transform = transform.inverse();
   tf_transform.setOrigin( tf::Vector3(inverted_transform.translation().x(), 
@@ -181,6 +263,9 @@ void Matcher::publish_transform(const std_msgs::Header& header)
   br.sendTransform(tf::StampedTransform(tf_transform, header.stamp, header.frame_id, map_frame));
 }
 
+/**
+ * @brief 更新基准帧特征
+*/
 void Matcher::update_base_features()
 {
 	// обновляем особенные точки если их не было - для первого измерения
@@ -188,9 +273,18 @@ void Matcher::update_base_features()
 
 	feature_pair_indices.clear();
 	base_features = new_features;	
+  distancePassed = 0.0;
   } else {
   	// TODO здесь должен быть код обновления опорных особенных точек по определенным условиям
-  	;
+    // 当移动距离大于2时，更新特征点集合，更新基准参考系
+    if (distancePassed > 2.0) {
+      base_features.resize(new_features.size());
+      // 将当前帧特征作为基准
+      for (size_t idx = 0; idx < new_features.size(); ++idx) {
+        base_features[idx] = transform * new_features[idx];
+      }
+      distancePassed = 0.0;
+    }
   }
   ROS_INFO_STREAM("Features");
   for (const auto& feature : base_features) {

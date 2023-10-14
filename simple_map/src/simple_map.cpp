@@ -144,7 +144,7 @@ void laserCallback(const sensor_msgs::LaserScan& scan)
             double endY = (distance * sin(beamDirection)) / map_resolution + y;
             // std::cout << "distance: " << distance << " endX: " << endX << " endY: " << endY << std::endl;
 
-            // 占据
+            // Occupied
             if (distance < scan.range_max) {
                 map_msg.data[(static_cast<int>(endY) * map_width + static_cast<int>(endX))] = 100;
                 map_msg.data[(static_cast<int>(endY + 1) * map_width + static_cast<int>(endX + 1))] = 100;
@@ -153,7 +153,7 @@ void laserCallback(const sensor_msgs::LaserScan& scan)
                 map_msg.data[(static_cast<int>(endY - 1) * map_width + static_cast<int>(endX - 1))] = 100;
             }
             double currentEnd = std::min<double>(distance, scan.range_max);
-            // 空闲
+            // Free
             for (double distanceTemp = 0.0; distanceTemp < currentEnd; distanceTemp += map_resolution) {
                 double tempX = (distanceTemp * cos(beamDirection)) / map_resolution + x;
                 double tempY = (distanceTemp * sin(beamDirection)) / map_resolution + y;
@@ -166,6 +166,7 @@ void laserCallback(const sensor_msgs::LaserScan& scan)
      * Occupancy Grid Mapping (Binary Bayes Filter)
     */
     auto bayesFilter = [&]() {
+        // Logarithmic odds
         const double locc = 1.6787536009528289; //
         const double locc_n = 0.8020599913279624; //
         const double locc_nn = 0.1020599913279624; //
@@ -184,13 +185,13 @@ void laserCallback(const sensor_msgs::LaserScan& scan)
             double endY = (distance * sin(beamDirection)) / map_resolution + y;
             // std::cout << "distance: " << distance << " endX: " << endX << " endY: " << endY << std::endl;
 
-            // 占据
+            // Occupied
             if (distance < scan.range_max) {
                 oddMap[(static_cast<int>(endY) * map_width + static_cast<int>(endX))] += locc;
                 {
                     double region = map_resolution * 1;
-                    double tempX = ((distance - region - 0.3) * cos(beamDirection)) / map_resolution + x;
-                    double tempY = ((distance - region - 0.3) * sin(beamDirection)) / map_resolution + y;
+                    double tempX = ((distance - region - 0.03) * cos(beamDirection)) / map_resolution + x;
+                    double tempY = ((distance - region - 0.03) * sin(beamDirection)) / map_resolution + y;
                     oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_n;
                     tempX = ((distance + region + 0.3) * cos(beamDirection)) / map_resolution + x;
                     tempY = ((distance + region + 0.3) * sin(beamDirection)) / map_resolution + y;
@@ -198,25 +199,27 @@ void laserCallback(const sensor_msgs::LaserScan& scan)
                 }
                 {
                     double region = map_resolution * 2;
-                    double tempX = ((distance - region - 0.3) * cos(beamDirection)) / map_resolution + x;
-                    double tempY = ((distance - region - 0.3) * sin(beamDirection)) / map_resolution + y;
+                    double tempX = ((distance - region - 0.03) * cos(beamDirection)) / map_resolution + x;
+                    double tempY = ((distance - region - 0.03) * sin(beamDirection)) / map_resolution + y;
                     oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nn;
                     tempX = ((distance + region + 0.3) * cos(beamDirection)) / map_resolution + x;
                     tempY = ((distance + region + 0.3) * sin(beamDirection)) / map_resolution + y;
                     oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nn;
                 }
                 {
-                    double region = map_resolution * 3;
-                    double tempX = ((distance - region - 0.3) * cos(beamDirection)) / map_resolution + x;
-                    double tempY = ((distance - region - 0.3) * sin(beamDirection)) / map_resolution + y;
-                    oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nnn;
-                    tempX = ((distance + region + 0.3) * cos(beamDirection)) / map_resolution + x;
-                    tempY = ((distance + region + 0.3) * sin(beamDirection)) / map_resolution + y;
-                    oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nnn;
+                    // double region = map_resolution * 3;
+                    // double tempX = ((distance - region - 0.03) * cos(beamDirection)) / map_resolution + x;
+                    // double tempY = ((distance - region - 0.03) * sin(beamDirection)) / map_resolution + y;
+                    // oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nnn;
+                    // tempX = ((distance + region + 0.3) * cos(beamDirection)) / map_resolution + x;
+                    // tempY = ((distance + region + 0.3) * sin(beamDirection)) / map_resolution + y;
+                    // oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] += locc_nnn;
+                    // if (oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] < 0)
+                    //     oddMap[(static_cast<int>(round(tempY)) * map_width + static_cast<int>(round(tempX)))] = 0;
                 }
             }
-            double currentEnd = std::min<double>(distance, scan.range_max) - map_resolution;
-            // 空闲
+            double currentEnd = std::min<double>(distance, scan.range_max) - map_resolution * 1;
+            // Free
             for (double distanceTemp = 0.0; distanceTemp < currentEnd; distanceTemp += map_resolution) {
                 double tempX = (distanceTemp * cos(beamDirection)) / map_resolution + x;
                 double tempY = (distanceTemp * sin(beamDirection)) / map_resolution + y;

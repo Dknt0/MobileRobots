@@ -6,22 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /landmark01
-        - /landmark11
-        - /landmark21
-        - /landmark31
-        - /landmark41
-        - /landmark51
-        - /landmark61
-        - /landmark71
-        - /landmark81
-        - /landmark91
-        - /landmark101
-        - /landmark111
-        - /landmark121
         - /Axes1
       Splitter Ratio: 0.5
-    Tree Height: 555
+    Tree Height: 455
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -37,10 +24,9 @@ Panels:
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
-    Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -75,6 +61,7 @@ Visualization Manager:
       Head Length: 0.5
       Head Radius: 0.30000001192092896
       Name: robot_pose
+      Queue Size: 10
       Shaft Length: 1
       Shaft Radius: 0.20000000298023224
       Shape: Arrow
@@ -90,6 +77,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark0
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -105,6 +93,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark1
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -120,6 +109,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark2
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -135,6 +125,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark3
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -145,13 +136,14 @@ Visualization Manager:
       Axes Length: 1
       Axes Radius: 0.10000000149011612
       Class: rviz/Pose
-      Color: 85; 170; 0
+      Color: 85; 170; 127
       Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
+      Head Length: 1
+      Head Radius: 1
       Name: landmark4
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
+      Queue Size: 10
+      Shaft Length: 0
+      Shaft Radius: 1
       Shape: Arrow
       Topic: /ekf_slam/landmark4
       Unreliable: false
@@ -165,6 +157,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark5
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -180,6 +173,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark6
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -195,6 +189,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark7
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -210,6 +205,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark8
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -225,6 +221,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark9
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -240,6 +237,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark10
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -255,6 +253,7 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark11
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
@@ -270,18 +269,81 @@ Visualization Manager:
       Head Length: 1
       Head Radius: 1
       Name: landmark12
+      Queue Size: 10
       Shaft Length: 0
       Shaft Radius: 1
       Shape: Arrow
       Topic: /ekf_slam/landmark12
       Unreliable: false
       Value: true
-    - Class: rviz/Axes
+    - Alpha: 1
+      Class: rviz/Axes
       Enabled: true
-      Length: 2
+      Length: 3.5
       Name: Axes
       Radius: 0.4000000059604645
       Reference Frame: base_link
+      Show Trail: false
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        base_footprint:
+          Value: true
+        base_laser_link:
+          Value: true
+        base_link:
+          Value: true
+        map:
+          Value: true
+        odom:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 15
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        odom:
+          base_footprint:
+            base_link:
+              base_laser_link:
+                map:
+                  {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.20000000298023224
+      Style: Flat Squares
+      Topic: /base_scan
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -310,7 +372,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.4099999964237213
+      Angle: -0.03999962657690048
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -320,19 +382,18 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 3.84774112701416
+      Scale: 16.91391372680664
       Target Frame: <Fixed Frame>
-      Value: TopDownOrtho (rviz)
-      X: 5.242579936981201
-      Y: -6.06210994720459
+      X: 17.802581787109375
+      Y: 11.985562324523926
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 846
+  Height: 752
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000016a000002b4fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b000002b4000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b4fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b000002b4000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650100000000000004b00000024400fffffffb0000000800540069006d0065010000000000000450000000000000000000000340000002b400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000016a00000252fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000252000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b4fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003b000002b4000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000056a0000003efc0100000002fb0000000800540069006d006501000000000000056a000003bc00fffffffb0000000800540069006d00650100000000000004500000000000000000000003fa0000025200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -341,6 +402,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1200
-  X: 400
-  Y: 87
+  Width: 1386
+  X: 534
+  Y: 92

@@ -30,7 +30,7 @@ private:
   void add_landmark(const sensor_msgs::LaserScan& scan, std::size_t start, std::size_t finish);
   // поиск индекса маяка в векторе состояния подходящего для измерения, -1 - новый маяк
   int associate_measurement(const Eigen::Vector2d& landmark_measuriment);
-  int add_landmark_to_state(const Eigen::Vector2d& landmark_measuriment);
+  int add_landmark_to_state(int measurementIndex);
   void correct(int landmarkIndex, int measurementIndex);
   // публикуем результаты
   void publish_transform(const std_msgs::Header& scan_header);
@@ -64,7 +64,7 @@ private:
   tf::TransformBroadcaster br;
 
   const std::string map_frame = nh.param<std::string>("map_frame", "map"); // 地图坐标系名称
-  double feature_rad = nh.param<double>("feature_radius", 0.55); // 特征点半径
+  double feature_rad = nh.param<double>("feature_radius", 1.0); // 特征点半径
 public:
   Slam();
 };

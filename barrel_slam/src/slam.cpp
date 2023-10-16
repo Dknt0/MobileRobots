@@ -29,16 +29,30 @@ void Slam::add_landmark(const sensor_msgs::LaserScan& scan, std::size_t start, s
 
   double x = 0.0, y = 0.0;
   // 根据扫描中点确定特征点中心
-  double minDist = 1e100;
-  size_t minIdx;
+  // double minDist = 1e100;
+  // size_t minIdx;
+  // for (size_t idx = start; idx < finish; ++idx) {
+  //   if (scan.ranges[idx] < minDist) {
+  //     minDist = scan.ranges[idx];
+  //     minIdx = idx;
+  //   }
+  // }
+  // double pointDist = minDist + feature_rad;
+  // double pointAngle = minIdx * scan.angle_increment - M_PI_2;
+
+  double pointDist = 0.0;
+  double pointAngle = 0.0;
+  int total = 0;
   for (size_t idx = start; idx < finish; ++idx) {
-    if (scan.ranges[idx] < minDist) {
-      minDist = scan.ranges[idx];
-      minIdx = idx;
-    }
+    if (scan.ranges[idx] >= scan.range_max) continue;
+    pointAngle += idx * scan.angle_increment - M_PI_2;
+    pointDist += scan.ranges[idx];
+    total++;
   }
-  double pointDist = minDist + feature_rad;
-  double pointAngle = minIdx * scan.angle_increment - M_PI_2;
+  pointAngle /= total;
+  pointDist /= total;
+  pointDist += feature_rad;
+
   // Feature position relative to laser
   x = pointDist * cos(pointAngle);
   y = pointDist * sin(pointAngle);
@@ -112,25 +126,66 @@ int Slam::associate_measurement(const Eigen::Vector2d& landmark_measurement) {
  * 
  * Dknt 2023.10.15
 */
-int Slam::add_landmark_to_state(const Eigen::Vector2d& landmark_measurement)
-{
+int Slam::add_landmark_to_state(int measurementIndex) {
   ++landmarks_found_quantity;
   // TODO init landmark in state
   // Здесь должен быть код по инициализации части вектора состояния, соответствующей 
   // маяку с индексом last_found_landmark_index
+  Eigen::Vector2d landmark_measurement = new_landmarks[measurementIndex];
   Eigen::Vector2d newLandmark;
+
   // 机器人到地图的坐标变换
   Eigen::Isometry2d robot_to_map = Eigen::Translation2d(X.segment(0, 2))
                                  * Eigen::Rotation2Dd(X(2));
   newLandmark = robot_to_map * landmark_measurement;
+
   X[ROBOT_STATE_SIZE + 2 * landmarks_found_quantity - 2] = newLandmark[0];
   X[ROBOT_STATE_SIZE + 2 * landmarks_found_quantity - 1] = newLandmark[1];
 
   // 更新协方差
-  P.block(ROBOT_STATE_SIZE + 2 * landmarks_found_quantity - 2, 
-          ROBOT_STATE_SIZE + 2 * landmarks_found_quantity - 2, 2, 2) = Q;
+  int landmarkIndex = landmarks_found_quantity;
+  double x = X(0);
+  double y = X(1);
+  double theta = X(2);
 
-  ROS_WARN("Adding landmark to state, x: %f y: %f", newLandmark[0], newLandmark[1]);
+  // measurement result
+  double zi_r = new_landmarks_measurement[measurementIndex](0);
+  double zi_phi = new_landmarks_measurement[measurementIndex](1);
+
+  // covariances
+  double pmxx = P(0, 0);
+  double pmxy = P(0, 1);
+  double pmxt = P(0, 2);
+  double pmyy = P(1, 1);
+  double pmyt = P(1, 2);
+  double pmtt = P(2, 2);
+
+  double dr = Q(0, 0);
+  double dphi = Q(0, 0);
+
+  double s_zt = sin(zi_phi + theta);
+  double c_zt = cos(zi_phi + theta);
+
+  Eigen::Matrix2d PLi;
+  PLi.setZero();
+  // From motion uncertainty
+  PLi(0, 0) += pmxx - 2 * zi_r * s_zt * pmxt + pow(zi_r * s_zt, 2.) * pmtt;
+  PLi(0, 1) += pmxy - zi_r * s_zt * pmyt + zi_r * c_zt * pmxt - zi_r * zi_r * s_zt * c_zt * pmtt;
+  PLi(1, 0) = PLi(0, 1);
+  PLi(1, 1) += pmyy + 2 * zi_r * c_zt * pmyt + pow(zi_r * s_zt, 2.) * pmtt;
+
+  // From measurement uncertainty
+  PLi(0, 0) += pow(c_zt, 2.) * dr + pow(zi_r * s_zt, 2.) * dphi;
+  PLi(0, 1) += s_zt * c_zt * dr  - zi_r * zi_r * s_zt * c_zt * dphi;
+  PLi(1, 0) = PLi(0, 1);
+  PLi(1, 1) += s_zt * s_zt * dr + pow(zi_r * c_zt, 2.) * dphi;
+
+  // update posterior covariance
+  // P = (Eigen::Matrix<double, ROBOT_STATE_SIZE + NUMBER_LANDMARKS * 2, ROBOT_STATE_SIZE + NUMBER_LANDMARKS * 2>::Identity() - K * Gi) * P;
+  P.block(ROBOT_STATE_SIZE + landmarkIndex * 2 - 2, ROBOT_STATE_SIZE + landmarkIndex * 2 - 2, 2, 2) = PLi;
+
+  ROS_INFO("Adding landmark to state, x: %f y: %f", newLandmark[0], newLandmark[1]);
+  // std::cout << "Check X:\n" << X.transpose() << std::endl;
   return landmarks_found_quantity;
 }
 
@@ -149,9 +204,10 @@ void Slam::correct(int landmarkIndex, int measurementIndex) {
    *
    * Y - landmark position
   */
-  // TODO 
+  // TODO
   // Здесь должен быть код для обновления состояния по измерению iого маяка
-  ROS_INFO("correct landmarkIndex: %d, measurementIndex: %d", landmarkIndex, measurementIndex);
+  // ROS_INFO("correct landmarkIndex: %d, measurementIndex: %d", landmarkIndex, measurementIndex);
+
   // robot pose predict
   double x = X(0);
   double y = X(1);
@@ -171,12 +227,13 @@ void Slam::correct(int landmarkIndex, int measurementIndex) {
   double x_mi_x = x - mi_x;
   double y_mi_y = y - mi_y;
 
-  std::cout << "mi posit x: " << mi_x << " y: " << mi_y <<
-               " -- x: " << x << " y: " << y << " - dist " 
-               << dist << " measurement: " <<  zi_r << std::endl;
+  // std::cout << "mi posit x: " << mi_x << " y: " << mi_y <<
+  //              " -- x: " << x << " y: " << y << " - dist " 
+  //              << dist << " measurement: " <<  zi_r << std::endl;
 
   double zi_r_pred = dist;
-  double zi_phi_pred = atan2(-y_mi_y, -x_mi_x);
+  // std::cout << "atan2(-y_mi_y, -x_mi_x): " << atan2(-y_mi_y, -x_mi_x) << " current theta " << theta << std::endl;
+  double zi_phi_pred = angles::normalize_angle(atan2(-y_mi_y, -x_mi_x) - theta);
   Eigen::Vector2d measurementPred(zi_r_pred, zi_phi_pred);
 
   // Jacobian for robot pose
@@ -203,14 +260,15 @@ void Slam::correct(int landmarkIndex, int measurementIndex) {
   Eigen::Matrix<double, ROBOT_STATE_SIZE + NUMBER_LANDMARKS * 2, 2> K;
   K.setZero();
   K = P * Gi.transpose() * tempMat.inverse();
-  // std::cout << "K:\n" << K << std::endl;
+  // std::cout << "K.T:\n" << K.transpose() << std::endl;
 
   // update posterior covariance
   P = (Eigen::Matrix<double, ROBOT_STATE_SIZE + NUMBER_LANDMARKS * 2, ROBOT_STATE_SIZE + NUMBER_LANDMARKS * 2>::Identity() - K * Gi) * P;
+  // std::cout << "P:\n" << P << std::endl;
 
   // update posterior mean
-  // X = X + K * (new_landmarks_measurement[measurementIndex] - measurementPred);
-  std::cout << "pred err: " << (new_landmarks_measurement[measurementIndex] - measurementPred).transpose() << std::endl;
+  X = X + K * (new_landmarks_measurement[measurementIndex] - measurementPred);
+  // std::cout << "pred err: " << (new_landmarks_measurement[measurementIndex] - measurementPred).transpose() << std::endl;
   
 }
 
@@ -219,7 +277,7 @@ void Slam::correct(int landmarkIndex, int measurementIndex) {
  * 
 */
 void Slam::on_scan(const sensor_msgs::LaserScan& scan) {
-  ROS_INFO("on_scan");
+  // ROS_INFO("on_scan");
   detect_landmarks(scan); // 检测路标
   predict((scan.header.stamp - last_time).toSec()); // 预测
   last_time = scan.header.stamp;
@@ -229,7 +287,7 @@ void Slam::on_scan(const sensor_msgs::LaserScan& scan) {
       correct(landmark_index, i); // 矫正
     } else {
         if (landmarks_found_quantity < NUMBER_LANDMARKS) { // 检测到新路标，加入状态
-          add_landmark_to_state(new_landmarks[i]); // 将新路标加入系统状态
+          add_landmark_to_state(i); // 将新路标加入系统状态
         } else { // 已经达到最大目标数
             // ROS_ERROR_STREAM("can not associate new landmark with any existing one");
         }
@@ -418,9 +476,9 @@ Slam::Slam():
 
   // 运动方程误差协方差
   R = Eigen::Matrix3d::Zero();
-  R(0, 0) = nh.param<double>("x_sigma_sqr", 0.01);
-  R(1, 1) = nh.param<double>("y_sigma_sqr", 0.01);
-  R(2, 2) = nh.param<double>("angle_sigma_sqr", 0.001);
+  R(0, 0) = nh.param<double>("x_sigma_sqr", 0.001);
+  R(1, 1) = nh.param<double>("y_sigma_sqr", 0.001);
+  R(2, 2) = nh.param<double>("angle_sigma_sqr", 0.0001);
 
   std::cout.precision(4);
 }
